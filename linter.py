@@ -146,12 +146,13 @@ def lint_plural_resource_names(spec, resolver):
     for path_name, methods_available in spec.get('paths', {}).items():
         path_name_without_variables = re.sub('{[^}]*}', '', path_name)
         for segment in path_name_without_variables.split('/'):
-            for word in segment.split('-'):
-                if word:
-                    singular = inflect_engine.singular_noun(word)
-                    plural = inflect_engine.plural_noun(word)
-                    if singular == word or (not singular and plural and plural != word):
-                        yield 'paths/"{}"'.format(path_name), '"{}" is not in plural form'.format(word)
+            if segment != '.well-known':
+                resource = ' '.join(segment.split('-'))
+                if resource:
+                    singular = inflect_engine.singular_noun(resource)
+                    plural = inflect_engine.plural_noun(resource)
+                    if singular == resource or (not singular and plural and plural != resource):
+                        yield 'paths/"{}"'.format(path_name), '"{}" is not in plural form'.format(resource)
 
 
 def run_linter(spec_file):
@@ -161,7 +162,6 @@ def run_linter(spec_file):
         resolver = validate_spec(spec)
     except Exception as e:
         msg = 'Error during Swagger schema validation:\n{}'.format(e)
-        error(msg)
         return [Issue(location='', message=msg, guideline='Must: Provide API Reference Definition using OpenAPI')]
 
     # collect all "rules" defined as functions starting with "lint_"
@@ -174,7 +174,6 @@ def run_linter(spec_file):
             else:
                 location = issue
                 message = None
-            warning('{}: {}{}'.format(location, message + ' ' if message else '', func.__doc__))
             issues.append(Issue(location=location, message=message or '', guideline=func.__doc__))
     return sorted(issues)
 
@@ -183,6 +182,8 @@ def run_linter(spec_file):
 @click.argument('spec_file', type=click.File('rb'))
 def cli(spec_file):
     issues = run_linter(spec_file)
+    for issue in issues:
+        warning('{}: {}{}'.format(issue.location, issue.message, issue.guideline))
     sys.exit(len(issues))
 
 
