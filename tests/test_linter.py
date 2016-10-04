@@ -1,8 +1,9 @@
 
 import pathlib
+from click.testing import CliRunner
 from unittest.mock import MagicMock
 
-from linter import Issue, run_linter
+from linter import Issue, cli, run_linter
 
 TEST_FOLDER = pathlib.Path(__file__).parent
 
@@ -31,3 +32,11 @@ def test_pet_store(monkeypatch):
 
     assert len(issues) == 1
     assert issues[0].location == 'paths/"/pets"/get/responses/200'
+
+
+def test_cli():
+    runner = CliRunner()
+    result = runner.invoke(cli, [str(TEST_FOLDER / 'fixtures/kio-api.yaml')], catch_exceptions=False)
+    # exit code equals the number of issues found
+    assert result.exit_code == 4
+    assert 'Must: Always Return JSON Objects' in result.output

@@ -1,0 +1,612 @@
+swagger: '2.0'
+
+# basic meta information
+info:
+  title: Kio API
+  version: '0.2'
+  description: Kio is STUPS' application registry.
+
+externalDocs:
+  description: STUPS overview
+  url: http://stups.io
+
+# technical configuration
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+
+security:
+  - oauth2: [uid]
+
+paths:
+
+  '/':
+    get:
+      summary: Application root
+      operationId: org.zalando.stups.friboo.system.http/redirect-to-swagger-ui
+      responses:
+        default:
+          description: "Redirects to /ui/"
+
+  # applications
+
+  '/apps':
+    get:
+      summary: list applications
+      description: |
+        Lists all registered applications.
+      tags:
+        - Applications
+      operationId: 'org.zalando.stups.kio.api/read-applications'
+      parameters:
+        - name: search
+          in: query
+          description: "Search term for application filtering."
+          type: string
+          required: false
+        - name: modified_before
+          in: query
+          description: "Only include apps that were modified before date"
+          type: string
+          format: date-time
+          required: false
+        - name: modified_after
+          in: query
+          description: "Only include apps that were modified after date"
+          type: string
+          format: date-time
+          required: false
+        - name: team_id
+          in: query
+          description: "Only include apps of this team"
+          type: string
+          required: false
+        - name: active
+          in: query
+          description: "If true, include only active apps"
+          type: boolean
+          required: false
+      responses:
+        200:
+          description: List of all applications
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Unique identifier of the application
+                  example: kio
+                team_id:
+                  type: string
+                  description: ID of the team, responsible for this application
+                  example: stups
+                active:
+                  type: boolean
+                  description: If this appliation is active, ie gets credentials
+                  example: true
+                name:
+                  type: string
+                  description: A human-readable name of the application
+                  example: Kio
+                subtitle:
+                  type: string
+                  description: Subtitle of the application
+                  example: Application Registry
+                service_url:
+                  type: string
+                  description: URL of the service
+                  example: https://kio.example.com/
+                scm_url:
+                  type: string
+                  description: URL of SCM repository
+                  example: https://github.com/zalando-stups/kio.git
+                documentation_url:
+                  type: string
+                  description: URL of documentation
+                  example: https://github.com/zalando-stups/kio
+                specification_url:
+                  type: string
+                  description: URL of the specification tool
+                  example: https://github.com/zalando-stups/kio/issues
+                last_modified:
+                  type: string
+                  format: date-time
+                  description: Point in time when the application was created or last modified.
+                  example: '2015-04-25T16:25:00.000Z'
+                matched_rank:
+                  type: number
+                  description: Search result rank for ordering
+                matched_description:
+                  type: string
+                  description: Text fragments of the search result
+              required:
+                - id
+                - team_id
+                - name
+        default:
+          $ref: '#/responses/Error'
+
+  '/apps/{application_id}':
+    get:
+      summary: read application
+      description: |
+        Returns details about one application
+      tags:
+      - Applications
+      operationId: 'org.zalando.stups.kio.api/read-application'
+      parameters:
+      - $ref: '#/parameters/ApplicationID'
+      responses:
+        200:
+          description: Details of one application
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Unique identifier of the application
+                example: kio
+              team_id:
+                type: string
+                description: ID of the team, responsible for this application
+                example: stups
+              active:
+                type: boolean
+                description: If the application is active
+                example: true
+              name:
+                type: string
+                description: A human-readable name of the application
+                example: Kio
+              subtitle:
+                type: string
+                description: An additional title for the application
+                example: Application Registry
+              description:
+                type: string
+                description: Purpose of this application
+                example: Kio manages all application base information.
+              service_url:
+                type: string
+                description: URL of the application
+                example: https://kio.example.com/
+              scm_url:
+                type: string
+                description: URL of SCM repository
+                example: https://github.com/zalando-stups/kio.git
+              documentation_url:
+                type: string
+                description: URL of documentation
+                example: https://github.com/zalando-stups/kio
+              specification_url:
+                type: string
+                description: URL of the specification tool
+                example: https://github.com/zalando-stups/kio/issues
+              required_approvers:
+                type: integer
+                description: Minimum number of approvers needed for a version. Used by fullstop.
+                example: 2
+              specification_type:
+                type: string
+                description: Where tickets for the application are managed
+                example: Github
+              criticality_level:
+                type: integer
+                description: The criticality level of the application
+                example: 2
+              last_modified:
+                type: string
+                format: date-time
+                description: Point in time when the application was created or last modified.
+                example: '2015-04-25T16:25:00.000Z'
+              last_modified_by:
+                type: string
+                description: Who modified the application last
+                example: npiccolotto
+              created:
+                type: string
+                format: date-time
+                description: Point in time when the application was created.
+                example: '2015-04-25T16:25:00.000Z'
+              created_by:
+                type: string
+                description: Who created the application
+                example: npiccolotto
+              publicly_accessible:
+                type: boolean
+                description: |
+                  Marks an app as "publicly available" (on the internet). A public app usually has a landing or login
+                  page and does not expose confidential data to unauthorized users. Examples are: Blogs, Job Portals,
+                  Shops, and so on. Secured (REST)-APIs and micro services are no public endpoints, even if they are
+                  available over the internet.
+                example: true
+        404:
+          description: Not found
+        default:
+          $ref: '#/responses/Error'
+
+    put:
+      summary: create or update application
+      description: |
+        Creates or updates an application.
+      tags:
+      - Applications
+      operationId: "org.zalando.stups.kio.api/create-or-update-application!"
+      parameters:
+      - $ref: '#/parameters/ApplicationID'
+      - name: application
+        in: body
+        description: Application details that will be saved.
+        schema:
+          '$ref': '#/definitions/StoreApplication'
+      responses:
+        200:
+          description: Application was saved.
+        default:
+          $ref: '#/responses/Error'
+
+  # approval types
+  '/apps/{application_id}/approvals':
+    get:
+      summary: list used approval types
+      description: |
+        Returns all used approval types for an application.
+      tags:
+        - Applications
+      operationId: 'org.zalando.stups.kio.api/read-application-approvals'
+      parameters:
+      - $ref: '#/parameters/ApplicationID'
+      responses:
+        200:
+          description: List of approvals
+          schema:
+            type: array
+            items:
+              type: string
+        404:
+          description: Not found
+        default:
+          $ref: '#/responses/Error'
+
+  # versions
+
+  '/apps/{application_id}/versions':
+    get:
+      summary: list versions
+      description: |
+        Returns a list of all versions of an application.
+      tags:
+        - Versions
+      operationId: 'org.zalando.stups.kio.api/read-versions-by-application'
+      parameters:
+      - $ref: '#/parameters/ApplicationID'
+      responses:
+        200:
+          description: List of versions
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Unique identifier of the version
+                  example: "1.0"
+                application_id:
+                  type: string
+                  description: ID of the version's application
+                  example: kio
+                last_modified:
+                  type: string
+                  format: date-time
+                  description: Point in time when the version was created or last modified.
+                  example: '2015-04-25T16:25:00.000Z'
+                artifact:
+                  type: string
+                  description: Software artifact reference of this version
+                  example: docker://stups/kio:1.0
+        404:
+          description: Not found
+        default:
+          $ref: '#/responses/Error'
+
+  '/apps/{application_id}/versions/{version_id}':
+    get:
+      summary: read version
+      description: |
+        Returns a list of all versions of an application.
+      tags:
+        - Versions
+      operationId: 'org.zalando.stups.kio.api/read-version-by-application'
+      parameters:
+      - $ref: '#/parameters/ApplicationID'
+      - $ref: '#/parameters/VersionID'
+      responses:
+        200:
+          description: Returns detailed information
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Unique identifier of the version
+                example: 1.0
+              application_id:
+                type: string
+                description: ID of the version's application
+                example: kio
+              last_modified:
+                type: string
+                format: date-time
+                description: Point in time when the version was created or last modified.
+                example: '2015-04-25T16:25:00.000Z'
+              last_modified_by:
+                type: string
+                description: Who modified the version last
+                example: npiccolotto
+              created:
+                type: string
+                format: date-time
+                description: Point in time when the version was created.
+                example: '2015-04-25T16:25:00.000Z'
+              created_by:
+                type: string
+                description: Who created the version
+                example: npiccolotto
+              artifact:
+                type: string
+                description: Software artifact reference of this version
+                example: docker://stups/kio:1.0
+              notes:
+                type: string
+                description: Release notes in Markdown format
+                example: |
+                  **Release 1.0**
+
+                  * initial commit
+                  * bugfixes
+        404:
+          description: Not found
+        default:
+          $ref: '#/responses/Error'
+
+    put:
+      summary: create or update version
+      description: |
+        Creates or updates a version.
+      tags:
+      - Versions
+      operationId: "org.zalando.stups.kio.api/create-or-update-version!"
+      parameters:
+      - $ref: '#/parameters/ApplicationID'
+      - $ref: '#/parameters/VersionID'
+      - name: version
+        in: body
+        description: Version details that will be saved.
+        schema:
+          '$ref': '#/definitions/StoreVersion'
+      responses:
+        200:
+          description: Version was saved.
+        default:
+          $ref: '#/responses/Error'
+
+  # approvals
+
+  '/apps/{application_id}/versions/{version_id}/approvals':
+    get:
+      summary: list approvals
+      description: |
+        Returns a list of all approvals of a version.
+      tags:
+        - Approvals
+      operationId: 'org.zalando.stups.kio.api/read-approvals-by-version'
+      parameters:
+      - $ref: '#/parameters/ApplicationID'
+      - $ref: '#/parameters/VersionID'
+      responses:
+        200:
+          description: List of approvals
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                application_id:
+                  type: string
+                  description: ID of the application
+                  example: kio
+                version_id:
+                  type: string
+                  description: ID of the application's version
+                  example: 1.0
+                approval_type:
+                  type: string
+                  description: Kind of approval like 'TESTED' or 'REVIEWED'.
+                  example: TESTED
+                user_id:
+                  type: string
+                  description: ID of the user who approved the version
+                  example: tobi
+                approved_at:
+                  type: string
+                  format: date-time
+                  description: Point in time when the version was approved
+                  example: '2015-04-25T16:25:00.000Z'
+                notes:
+                  type: string
+                  description: Some hints on what was approved
+                  example: |
+                    I tested this kio version carefully.
+        404:
+          description: Not found
+        default:
+          $ref: '#/responses/Error'
+
+    post:
+      summary: approve version
+      description: |
+        Approves a version.
+      tags:
+      - Approvals
+      operationId: "org.zalando.stups.kio.api/approve-version!"
+      parameters:
+      - $ref: '#/parameters/ApplicationID'
+      - $ref: '#/parameters/VersionID'
+      - name: approval
+        in: body
+        description: Approval information
+        schema:
+          '$ref': '#/definitions/StoreApproval'
+      responses:
+        200:
+          description: Version was approved.
+        default:
+          $ref: '#/responses/Error'
+
+# definitions
+
+parameters:
+  ApplicationID:
+    name: application_id
+    in: path
+    type: string
+    description: ID of the application
+    required: true
+    pattern: "^[a-z][a-z0-9-]*[a-z0-9]$"
+    #example: kio
+
+  VersionID:
+    name: version_id
+    in: path
+    type: string
+    description: ID of the version
+    required: true
+    pattern: "^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$"
+
+responses:
+  Error:
+    description: An error occured.
+    schema:
+      $ref: '#/definitions/Error'
+
+definitions:
+  Error:
+    type: object
+    properties:
+      message:
+        type: string
+
+  StoreApplication:
+    type: object
+    properties:
+      team_id:
+        type: string
+        description: ID of the team, responsible for this application
+        example: stups
+      active:
+        type: boolean
+        description: if the application is active
+        example: true
+      name:
+        type: string
+        description: A human-readable name
+        example: Kio
+      subtitle:
+        type: string
+        description: An additional title for the application
+        example: STUPS' application registry
+      description:
+        type: string
+        description: Purpose of this application
+        example: Kio manages all application base information.
+      service_url:
+        type: string
+        description: URL of the application
+        example: https://kio.example.com/
+      scm_url:
+        type: string
+        description: URL of SCM repository
+        example: https://github.com/zalando-stups/kio.git
+      documentation_url:
+        type: string
+        description: URL of documentation
+        example: https://github.com/zalando-stups/kio
+      specification_url:
+        type: string
+        description: URL of the specification tool
+        example: https://github.com/zalando-stups/kio/issues
+      criticality_level:
+        description: Criticality level of an application
+        type: integer
+        minimum: 1 # low
+        maximum: 3 # high
+        default: 2 # medium
+        example: 2
+      required_approvers:
+        type: integer
+        minimum: 1
+        description: DEPRECATED! WILL BE REMOVED IN NEXT RELASE! Minimum number of approvers needed for a version. Used by fullstop.
+        example: 2
+        default: 2
+      specification_type:
+        type: string
+        description: Where tickets for the application are managed
+        example: Github
+      publicly_accessible:
+        type: boolean
+        description: |
+          Marks an app as "publicly available" (on the internet). A public app usually has a landing or login
+          page and does not expose confidential data to unauthorized users. Examples are: Blogs, Job Portals,
+          Shops, and so on. Secured (REST)-APIs and micro services are no public endpoints, even if they are
+          available over the internet.
+        example: true
+    required:
+      - team_id
+      - active
+      - name
+
+  StoreVersion:
+    type: object
+    properties:
+      artifact:
+        type: string
+        description: Software artifact reference of this version
+        example: docker://stups/kio:1.0
+      notes:
+        type: string
+        description: Release notes in Markdown format
+        example: |
+          **Release 1.0**
+
+          * initial commit
+          * bugfixes
+    required:
+    - artifact
+
+  StoreApproval:
+    type: object
+    properties:
+      approval_type:
+        type: string
+        description: Kind of approval like 'TESTED' or 'REVIEWED'.
+        example: TESTED
+      notes:
+        type: string
+        description: Some hints on what was approved
+        example: |
+          I tested this kio version carefully.
+    required:
+    - approval_type
+
+securityDefinitions:
+  oauth2:
+    type: oauth2
+    flow: implicit
+    authorizationUrl: https://example.com/oauth2/dialog
+    scopes:
+      uid: Unique identifier of the user accessing the service.
