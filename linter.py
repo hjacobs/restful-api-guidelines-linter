@@ -94,15 +94,14 @@ def lint_property_names(spec, resolver):
                     yield 'definitions/{}/{}'.format(def_name, prop_name)
 
 
-@click.command()
-@click.argument('spec_file', type=click.File('rb'))
-def cli(spec_file):
+def run_linter(spec_file):
     spec = yaml.safe_load(spec_file)
     spec = compatibility_layer(spec)
     try:
         resolver = validate_spec(spec)
     except Exception as e:
         error('Error during Swagger schema validation:\n{}'.format(e))
+        return
 
     # collect all "rules" defined as functions starting with "lint_"
     rules = [f for name, f in globals().items() if name.startswith('lint_')]
@@ -114,6 +113,12 @@ def cli(spec_file):
                 location = issue
                 message = None
             warning('{}: {}{}'.format(location, message + ' ' if message else '', func.__doc__))
+
+
+@click.command()
+@click.argument('spec_file', type=click.File('rb'))
+def cli(spec_file):
+    run_linter(spec_file)
 
 
 if __name__ == '__main__':
