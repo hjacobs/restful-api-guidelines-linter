@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import collections
+import inflect
 import re
 import sys
 
@@ -135,6 +136,24 @@ def lint_response_objects(spec, resolver):
                         yield 'paths/"{}"/{}/responses/{}'.format(path_name, method_name, status_code)
 
 
+def lint_plural_resource_names(spec, resolver):
+    """
+    Must: Pluralize Resource Names
+
+    https://zalando.github.io/restful-api-guidelines/naming/Naming.html#must-pluralize-resource-names
+    """
+    inflect_engine = inflect.engine()
+    for path_name, methods_available in spec.get('paths', {}).items():
+        path_name_without_variables = re.sub('{[^}]*}', '', path_name)
+        for segment in path_name_without_variables.split('/'):
+            for word in segment.split('-'):
+                if word:
+                    singular = inflect_engine.singular_noun(word)
+                    plural = inflect_engine.plural_noun(word)
+                    if singular == word or (not singular and plural and plural != word):
+                        yield 'paths/"{}"'.format(path_name), '"{}" is not in plural form'.format(word)
+
+
 def run_linter(spec_file):
     spec = yaml.safe_load(spec_file)
     spec = compatibility_layer(spec)
@@ -156,7 +175,7 @@ def run_linter(spec_file):
                 location = issue
                 message = None
             warning('{}: {}{}'.format(location, message + ' ' if message else '', func.__doc__))
-            issues.append(Issue(location=location, message=message, guideline=func.__doc__))
+            issues.append(Issue(location=location, message=message or '', guideline=func.__doc__))
     return sorted(issues)
 
 
