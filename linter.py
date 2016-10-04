@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import re
+import sys
 
 import click
 import yaml
@@ -38,7 +39,8 @@ def lint_path_names(spec, resolver):
     http://zalando.github.io/restful-api-guidelines/naming/Naming.html#must-use-lowercase-separate-words-with-hyphens-for-path-segments
     """
     for path_name, methods_available in spec.get('paths', {}).items():
-        if not re.match('^/[/a-z0-9{}.-]*$', path_name):
+        path_name_without_variables = re.sub('{[^}]*}', '', path_name)
+        if not re.match('^/[/a-z0-9.-]*$', path_name_without_variables):
             yield 'paths/"{}"'.format(path_name)
 
 
@@ -93,15 +95,12 @@ def lint_property_names(spec, resolver):
 
     while definitions:
         def_name, definition = definitions.pop()
-        sub_props = definition.get('properties')
-        if sub_props:
-            for sub_prop_name in sub_props:
-                if not re.match('^[a-z][a-z0-9_]*$', sub_prop_name):
-                    yield 'definitions/{}/{}'.format(def_name, sub_prop_name)
-                sub_prop = sub_props.get(sub_prop_name)
-                sub_prop_type = sub_prop.get('type')
-                if sub_prop_type == 'object':
-                    definitions.append(('{}/{}'.format(def_name, sub_prop_name), sub_prop))
+        for sub_prop_name, sub_prop in definition.get('properties', {}).items():
+            if not re.match('^[a-z][a-z0-9_]*$', sub_prop_name):
+                yield 'definitions/{}/{}'.format(def_name, sub_prop_name)
+            sub_prop_type = sub_prop.get('type')
+            if sub_prop_type == 'object':
+                definitions.append(('{}/{}'.format(def_name, sub_prop_name), sub_prop))
 
 
 
@@ -111,11 +110,13 @@ def run_linter(spec_file):
     try:
         resolver = validate_spec(spec)
     except Exception as e:
-        error('Error during Swagger schema validation:\n{}'.format(e))
-        return
+        msg = 'Error during Swagger schema validation:\n{}'.format(e)
+        error(msg)
+        return [('', msg)]
 
     # collect all "rules" defined as functions starting with "lint_"
     rules = [f for name, f in globals().items() if name.startswith('lint_')]
+    issues = []
     for func in rules:
         for issue in func(spec, resolver):
             if isinstance(issue, tuple):
@@ -124,12 +125,15 @@ def run_linter(spec_file):
                 location = issue
                 message = None
             warning('{}: {}{}'.format(location, message + ' ' if message else '', func.__doc__))
+            issues.append(issue)
+    return issues
 
 
 @click.command()
 @click.argument('spec_file', type=click.File('rb'))
 def cli(spec_file):
-    run_linter(spec_file)
+    issues = run_linter(spec_file)
+    sys.exit(len(issues))
 
 
 if __name__ == '__main__':
