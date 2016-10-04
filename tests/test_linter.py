@@ -1,7 +1,8 @@
 
 import pathlib
-from click.testing import CliRunner
 from unittest.mock import MagicMock
+
+from click.testing import CliRunner
 
 from linter import Issue, cli, run_linter
 
