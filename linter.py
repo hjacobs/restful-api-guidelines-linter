@@ -86,12 +86,23 @@ def lint_property_names(spec, resolver):
 
     http://zalando.github.io/restful-api-guidelines/json-guidelines/JsonGuidelines.html#must-property-names-must-be-snakecase-and-never-camelcase
     """
-    # TODO: this only iterates over global definitions (and only one level)
+    definitions = []
     for def_name, definition in spec.get('definitions', {}).items():
         if definition.get('type') == 'object':
-            for prop_name in definition.get('properties'):
-                if not re.match('^[a-z][a-z0-9_]*$', prop_name):
-                    yield 'definitions/{}/{}'.format(def_name, prop_name)
+            definitions.append((def_name, definition))
+
+    while definitions:
+        def_name, definition = definitions.pop()
+        sub_props = definition.get('properties')
+        if sub_props:
+            for sub_prop_name in sub_props:
+                if not re.match('^[a-z][a-z0-9_]*$', sub_prop_name):
+                    yield 'definitions/{}/{}'.format(def_name, sub_prop_name)
+                sub_prop = sub_props.get(sub_prop_name)
+                sub_prop_type = sub_prop.get('type')
+                if sub_prop_type == 'object':
+                    definitions.append(('{}/{}'.format(def_name, sub_prop_name), sub_prop))
+
 
 
 def run_linter(spec_file):
