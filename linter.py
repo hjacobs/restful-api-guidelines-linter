@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import collections
-import inflect
 import re
 import sys
 
 import click
+import inflect
 import yaml
 from clickclick import error, warning
 from swagger_spec_validator.validator20 import validate_spec
