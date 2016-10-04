@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import collections
 import re
 import sys
 
@@ -7,6 +8,8 @@ import click
 import yaml
 from clickclick import error, warning
 from swagger_spec_validator.validator20 import validate_spec
+
+Issue = collections.namedtuple('Issue', 'location message guideline')
 
 
 def compatibility_layer(spec):
@@ -30,6 +33,17 @@ def compatibility_layer(spec):
 
             method_def['responses'] = response_definitions
     return spec
+
+
+def lint_base_path(spec, resolver):
+    """
+    Must: Do Not Use URI Versioning
+
+    https://zalando.github.io/restful-api-guidelines/compatibility/Compatibility.html#must-do-not-use-uri-versioning
+    """
+    base_path = spec.get('basePath', '')
+    if re.match('.*v[0-9].*', base_path):
+        yield 'basePath'
 
 
 def lint_path_names(spec, resolver):
@@ -103,6 +117,21 @@ def lint_property_names(spec, resolver):
                 definitions.append(('{}/{}'.format(def_name, sub_prop_name), sub_prop))
 
 
+def lint_response_objects(spec, resolver):
+    """
+    Must: Always Return JSON Objects As Top-Level Data Structures To Support Extensibility
+
+    https://zalando.github.io/restful-api-guidelines/compatibility/Compatibility.html#must-always-return-json-objects-as-toplevel-data-structures-to-support-extensibility
+    """
+
+    for path_name, methods_available in spec.get('paths', {}).items():
+        for method_name, method_def in methods_available.items():
+            if isinstance(method_def, dict):
+                for status_code, response_def in method_def.get('responses', {}).items():
+                    schema_type = response_def.get('schema', {}).get('type')
+                    if schema_type and schema_type != 'object':
+                        yield 'paths/"{}"/{}/responses/{}'.format(path_name, method_name, status_code)
+
 
 def run_linter(spec_file):
     spec = yaml.safe_load(spec_file)
@@ -112,7 +141,7 @@ def run_linter(spec_file):
     except Exception as e:
         msg = 'Error during Swagger schema validation:\n{}'.format(e)
         error(msg)
-        return [('', msg)]
+        return [Issue(location='', message=msg, guideline='Must: Provide API Reference Definition using OpenAPI')]
 
     # collect all "rules" defined as functions starting with "lint_"
     rules = [f for name, f in globals().items() if name.startswith('lint_')]
@@ -125,8 +154,8 @@ def run_linter(spec_file):
                 location = issue
                 message = None
             warning('{}: {}{}'.format(location, message + ' ' if message else '', func.__doc__))
-            issues.append(issue)
-    return issues
+            issues.append(Issue(location=location, message=message, guideline=func.__doc__))
+    return sorted(issues)
 
 
 @click.command()
