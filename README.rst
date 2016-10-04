@@ -15,7 +15,7 @@ Usage:
 The following guidelines are currently checked:
 
 * `Must: Always Return JSON Objects As Top-Level Data Structures To Support Extensibility <https://zalando.github.io/restful-api-guidelines/compatibility/Compatibility.html#must-always-return-json-objects-as-toplevel-data-structures-to-support-extensibility>`_
-* `Must: Avoid Trailing Slashes <>`_
+* `Must: Avoid Trailing Slashes <https://zalando.github.io/restful-api-guidelines/naming/Naming.html#must-avoid-trailing-slashes>`_
 * `Must: Do Not Use URI Versioning <https://zalando.github.io/restful-api-guidelines/compatibility/Compatibility.html#must-do-not-use-uri-versioning>`_
 * `Must: Property names must be snake_case (and never camelCase). <http://zalando.github.io/restful-api-guidelines/json-guidelines/JsonGuidelines.html#must-property-names-must-be-snakecase-and-never-camelcase>`_
 * `Must: Use HTTP Methods Correctly <http://zalando.github.io/restful-api-guidelines/http/Http.html#must-use-http-methods-correctly>`_

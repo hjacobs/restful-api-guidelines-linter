@@ -73,6 +73,8 @@ def lint_http_methods(spec, resolver):
 def lint_path_avoid_trailing_slashes(spec, resolver):
     """
     Must: Avoid Trailing Slashes
+
+    https://zalando.github.io/restful-api-guidelines/naming/Naming.html#must-avoid-trailing-slashes
     """
     for path_name, methods_available in spec.get('paths', {}).items():
         if len(path_name) > 1 and path_name.endswith('/'):
