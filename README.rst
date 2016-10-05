@@ -23,4 +23,13 @@ The following guidelines are currently checked:
 * `Must: Use lowercase separate words with hyphens for Path Segments <http://zalando.github.io/restful-api-guidelines/naming/Naming.html#must-use-lowercase-separate-words-with-hyphens-for-path-segments>`_
 * `Must: Use snake_case (never camelCase) for Query Parameters <http://zalando.github.io/restful-api-guidelines/naming/Naming.html#must-use-snakecase-never-camelcase-for-query-parameters>`_
 
+
+Running Unit Tests
+==================
+
+.. code-block:: bash
+
+    $ sudo pip3 install -U tox
+    $ tox
+
 .. _Zalando's RESTful API Guidelines: http://zalando.github.io/restful-api-guidelines/
