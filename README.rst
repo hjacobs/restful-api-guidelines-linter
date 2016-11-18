@@ -2,6 +2,27 @@
 Linter for Zalando's RESTful API Guidelines
 ===========================================
 
+.. image:: https://travis-ci.org/zalando-incubator/restful-api-guidelines-linter.svg?branch=master
+   :target: https://travis-ci.org/zalando-incubator/restful-api-guidelines-linter
+   :alt: Build Status
+
+.. image:: https://coveralls.io/repos/zalando-incubator/restful-api-guidelines-linter/badge.svg
+   :target: https://coveralls.io/r/zalando-incubator/restful-api-guidelines-linter
+   :alt: Code Coverage
+
+.. image:: https://img.shields.io/pypi/dw/restful-api-guidelines-linter.svg
+   :target: https://pypi.python.org/pypi/restful-api-guidelines-linter/
+   :alt: PyPI Downloads
+
+.. image:: https://img.shields.io/pypi/v/restful-api-guidelines-linter.svg
+   :target: https://pypi.python.org/pypi/restful-api-guidelines-linter/
+   :alt: Latest PyPI version
+
+.. image:: https://img.shields.io/pypi/l/restful-api-guidelines-linter.svg
+   :target: https://pypi.python.org/pypi/restful-api-guidelines-linter/
+   :alt: License
+
+
 This is a very basic linter to check whether a given Swagger specification (YAML file)
 complies with `Zalando's RESTful API Guidelines`_.
 

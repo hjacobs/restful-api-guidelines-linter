@@ -18,7 +18,8 @@ def read_version(package):
             if line.startswith('__version__ = '):
                 return line.split()[-1].strip().strip("'")
 
-version = 0.1
+
+version = 0.2
 
 py_major_minor_version = tuple(int(v.rstrip('+')) for v in platform.python_version_tuple()[:2])
 
