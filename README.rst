@@ -9,8 +9,8 @@ Usage:
 
 .. code-block:: bash
 
-    $ sudo pip3 install -r requirements.txt
-    $ ./linter.py my-swagger-spec.yaml
+    $ sudo pip3 install -U restful-api-guidelines-linter
+    $ restful-api-guidelines-linter my-swagger-spec.yaml -v
 
 The following guidelines are currently checked:
 
