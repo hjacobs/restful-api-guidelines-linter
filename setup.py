@@ -62,7 +62,7 @@ def readme():
 
 
 setup(
-    name='linter',
+    name='restful-api-guidelines-linter',
     packages=find_packages(),
     version=version,
     description='',
@@ -84,5 +84,5 @@ setup(
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
     ],
-    entry_points={}
+    entry_points={'console_scripts': ['restful-api-guidelines-linter = restful_api_guidelines_linter.cli:main']}
 )

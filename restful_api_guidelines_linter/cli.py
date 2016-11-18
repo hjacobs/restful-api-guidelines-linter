@@ -7,7 +7,7 @@ import sys
 import click
 import inflect
 import yaml
-from clickclick import error, warning
+from clickclick import warning, info
 from swagger_spec_validator.validator20 import validate_spec
 
 Issue = collections.namedtuple('Issue', 'location message guideline')
@@ -155,9 +155,11 @@ def lint_plural_resource_names(spec, resolver):
                         yield 'paths/"{}"'.format(path_name), '"{}" is not in plural form'.format(resource)
 
 
-def run_linter(spec_file):
+def run_linter(spec_file, verbose: bool=False):
     spec = yaml.safe_load(spec_file)
     spec = compatibility_layer(spec)
+    if verbose:
+        info('Validating OpenAPI spec..')
     try:
         resolver = validate_spec(spec)
     except Exception as e:
@@ -168,6 +170,8 @@ def run_linter(spec_file):
     rules = [f for name, f in globals().items() if name.startswith('lint_')]
     issues = []
     for func in rules:
+        if verbose:
+            info('Linting {}..'.format(func.__name__.split('_', 1)[-1]))
         for issue in func(spec, resolver):
             if isinstance(issue, tuple):
                 location, message = issue
@@ -180,12 +184,13 @@ def run_linter(spec_file):
 
 @click.command()
 @click.argument('spec_file', type=click.File('rb'))
-def cli(spec_file):
-    issues = run_linter(spec_file)
+@click.option('-v', '--verbose', is_flag=True)
+def cli(spec_file, verbose: bool):
+    issues = run_linter(spec_file, verbose)
     for issue in issues:
         warning('{}: {}{}'.format(issue.location, issue.message, issue.guideline))
     sys.exit(len(issues))
 
 
-if __name__ == '__main__':
+def main():
     cli()

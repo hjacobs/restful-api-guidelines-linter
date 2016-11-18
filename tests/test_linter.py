@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from click.testing import CliRunner
 
-from linter import Issue, cli, run_linter
+from restful_api_guidelines_linter.cli import Issue, cli, run_linter
 
 TEST_FOLDER = pathlib.Path(__file__).parent
 
